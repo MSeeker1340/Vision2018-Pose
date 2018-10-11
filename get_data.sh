@@ -3,7 +3,6 @@ mkdir dataset
 mkdir dataset/COCO/
 mkdir dataset/COCO/images
 mkdir dataset/COCO/images/mask2014
-mkdir dataset/COCO/mat
 mkdir dataset/COCO/json
 
 wget http://msvocds.blob.core.windows.net/annotations-1-0-3/person_keypoints_trainval2014.zip
