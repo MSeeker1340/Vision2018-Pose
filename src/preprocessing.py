@@ -11,18 +11,7 @@ from skimage import img_as_float
 from skimage.io import imread
 from skimage.transform import resize
 from pycocotools.coco import COCO
-
-# Keypoints and skeletons lookup table
-# person_cat = coco.loadCats(coco.getCatIds(catNms=['person']))[0]
-# KEYPOINTS = person_cat['keypoints']
-# SKELETONS = [(i-1, j-1) for i, j in person_cat['skeleton']] # convert to 0-based indexing
-
-KEYPOINTS = ['nose','left_eye','right_eye','left_ear','right_ear','left_shoulder','right_shoulder',
-             'left_elbow','right_elbow','left_wrist','right_wrist','left_hip','right_hip',
-             'left_knee','right_knee','left_ankle','right_ankle']
-NUM_KEYPOINTS = len(KEYPOINTS)
-SKELETONS = [(15, 13), (13, 11), (16, 14), (14, 12), (11, 12), (5, 11), (6, 12), (5, 6), (5, 7),
-             (6, 8), (7, 9), (8, 10), (1, 2), (0, 1), (0, 2), (1, 3), (2, 4), (3, 5), (4, 6)]
+from config import NUM_KEYPOINTS, image_shape, sigma
 
 def update_confidence_map(Y, keypoints, scale, sigma, image_path):
     """
@@ -45,7 +34,7 @@ def update_confidence_map(Y, keypoints, scale, sigma, image_path):
                 for j in range(Y.shape[1]):
                     Y[i,j,k] = max(Y[i,j,k], np.exp(-((i - x)**2 + (j - y)**2) / sigma**2))
 
-def load_data(data_dir, data_type, image_shape=(224,224), sigma=1.0, num_input=None, verbose=False):
+def load_data(data_dir, data_type, image_shape=image_shape, sigma=sigma, num_input=None, verbose=False):
     """
     Load raw data from disk and preprocess into feature and label tensors.
 
