@@ -45,7 +45,7 @@ def update_confidence_map(Y, keypoints, scale, sigma, image_path):
                 for j in range(Y.shape[1]):
                     Y[i,j,k] = max(Y[i,j,k], np.exp(-((i - x)**2 + (j - y)**2) / sigma**2))
 
-def load_data(data_dir, data_type, image_shape=(224,224), sigma=1.0, num_input=None):
+def load_data(data_dir, data_type, image_shape=(224,224), sigma=1.0, num_input=None, verbose=False):
     """
     Load raw data from disk and preprocess into feature and label tensors.
 
@@ -86,7 +86,11 @@ def load_data(data_dir, data_type, image_shape=(224,224), sigma=1.0, num_input=N
     for i, img_data in enumerate(images):
         # Build X (feature; scaled and resized input image)
         img_path = path.join(image_dir, img_data['file_name'])
+        verbose and print("Processing ", img_path)
         img = img_as_float(imread(img_path)) # scale pixel value to [0,1]
+        if len(img.shape) == 2:
+            # Handle black and white images
+            img = np.tile(np.reshape(img, (*img.shape, 1)), 3)
         X[i,:,:,:] = resize(img, image_shape, mode='reflect', anti_aliasing=True)
 
         # Compute the scale between the raw image and the confidence maps.
