@@ -7,7 +7,6 @@
 import numpy as np
 from warnings import warn
 from os import path
-from skimage import img_as_float
 from skimage.io import imread
 from skimage.transform import resize
 from pycocotools.coco import COCO
@@ -86,7 +85,7 @@ def load_data(data_dir, data_type, image_shape=image_shape, sigma=8.0, num_input
         # Build X (feature; scaled and resized input image)
         img_path = path.join(image_dir, img_data['file_name'])
         verbose and print("Processing ", img_path)
-        img = img_as_float(imread(img_path)) # scale pixel value to [0,1]
+        img = imread(img_path).astype(float) # scale pixel value to [0,255]
         if len(img.shape) == 2:
             # Handle black and white images
             img = np.tile(np.reshape(img, (*img.shape, 1)), 3)
