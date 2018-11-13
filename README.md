@@ -16,9 +16,9 @@ src/preprocessing.py
 
 ### API
 Load preprocessed data from its function: 
-
+```python
 X, Y = load_data(data_dir, data_type, image_shape=image_shape, sigma=8.0, num_input=None, verbose=False, image_ids = None)
-
+```
 X —— Image
 
 Y —— Confidence map
@@ -35,8 +35,9 @@ notebooks/Preprocessing.ipynb
 src/plot.py
 
 ### API
+```python
 plot_on_img(x, y, f)
-
+```
 f —— The index of a key point
 
 ### What it does
@@ -46,15 +47,19 @@ Plot confidence map Y on image X
 src/vgg.py
 
 ### API
+```python
 Z = prestage(X.copy())
+```
 
 ## Train
 notebooks/Train.ipynb
 src/model.py
 
 ### API
+```python
 stage1.fit(Z, Y, epochs=15, validation_split=0.2)
 stage1.save_weights("../dataset/models/stage1_weights.h5")
+```
 
 ### What it does
 Pass Z through the model using Adam optimizer. For each layer, evaluate trained Z and Y's mean square error to check convergence.
@@ -68,11 +73,19 @@ At last, save the normalization weights for prediction
 
 ## Test
 notebooks/Test.ipynb
-src/model.py —— stage1.load_weights("../dataset/models/stage1_weights.h5")
-                Y_predict = stage1.predict(Z)
-src/vgg.py —— Z = prestage(X.copy())
-src/plot.py —— plot_on_img(x, y, f)
-
+src/model.py
+```python
+stage1.load_weights("../dataset/models/stage1_weights.h5")
+Y_predict = stage1.predict(Z)
+```
+src/vgg.py
+```python
+Z = prestage(X.copy())
+```
+src/plot.py
+```python
+plot_on_img(x, y, f)
+```
 
 ### Test procedure
 1. Load data X,Y from COCO (just like training)
