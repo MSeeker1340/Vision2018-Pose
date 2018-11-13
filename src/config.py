@@ -13,5 +13,5 @@ SKELETONS = [(15, 13), (13, 11), (16, 14), (14, 12), (11, 12), (5, 11), (6, 12),
 # Hyperparameters
 image_shape = (224, 224) # standardized input shape
 sigma = 1.0 # spread of the ground truth confidence map
-learning_rate = 0.01
+learning_rate = 0.001
 momentum = 0.9
