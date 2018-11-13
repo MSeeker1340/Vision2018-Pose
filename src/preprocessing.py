@@ -11,8 +11,9 @@ from skimage.io import imread
 from skimage.transform import resize
 from pycocotools.coco import COCO
 from config import NUM_KEYPOINTS, image_shape, sigma
-import matplotlib.pyplot as pyplot
+from numba import jit
 
+@jit
 def update_confidence_map_internal(Y, x_kp, y_kp, sigma):
     # Calculate using a Gaussian kernel and take max
     # TODO: vectorize this part
