@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as pyplot
 from skimage.transform import resize
-from config import KEYPOINTS
 
 def plot_result(y, f):
     rshape = y.shape
@@ -27,17 +26,20 @@ def plot_on_img(x, y, f):
     pyplot.imshow(img)
     
 def plot_results(x, y_predict, y_truth):
-    
+    x /= 255.0
     for f in range(17):
         pyplot.figure()
         #pyplot.subplot(6,6, f*2+1)
         pyplot.subplot(1,2, 1)
         plot_on_img(x, y_predict, f)
-        pyplot.title(f"{KEYPOINTS[f]}: Prediction")
+        if f == 0:
+            pyplot.title("Prediction")
+        pyplot.ylabel(KEYPOINTS[f], rotation=0, labelpad=35)
         #pyplot.subplot(6,6, f*2+2)
         pyplot.subplot(1,2, 2)
         plot_on_img(x, y_truth, f)
-        pyplot.title(f"{KEYPOINTS[f]}: Ground truth")
+        if f == 0:
+            pyplot.title("Ground truth")
     
 # plot_on_img(X[10], Y[10], 0)
     
