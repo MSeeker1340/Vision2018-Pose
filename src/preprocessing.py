@@ -13,6 +13,13 @@ from pycocotools.coco import COCO
 from config import NUM_KEYPOINTS, image_shape, sigma
 import matplotlib.pyplot as pyplot
 
+def update_confidence_map_internal(Y, x_kp, y_kp, sigma):
+    # Calculate using a Gaussian kernel and take max
+    # TODO: vectorize this part
+    for i in range(Y.shape[0]):
+        for j in range(Y.shape[1]):
+            Y[i,j] = max(Y[i,j], np.exp(-((i - x_kp)**2 + (j - y_kp)**2) / sigma**2))
+
 def update_confidence_map_resize(img_shape, Y, annos, sigma, image_path):
     """
     Updates the w' x h' x NUM_KEYPOINTS confidence maps Y using one person's
@@ -27,16 +34,9 @@ def update_confidence_map_resize(img_shape, Y, annos, sigma, image_path):
             warn(f"Keypoints data for {image_path} is corrupted.")
             continue
         for k in range(NUM_KEYPOINTS):
-            y, x, visibility = keypoints[3*k], keypoints[3*k+1], keypoints[3*k+2]
+            y_kp, x_kp, visibility = keypoints[3*k], keypoints[3*k+1], keypoints[3*k+2]
             if visibility == 2: # labeled and visible
-                # Scale the coordinates
-                # x /= scale[0]
-                # y /= scale[1]
-                # Calculate using a Gaussian kernel and take max
-                # TODO: vectorize this part
-                for i in range(img_shape[0]):
-                    for j in range(img_shape[1]):
-                        Y_tmp[i,j,k] = max(Y_tmp[i,j,k], np.exp(-((i - x)**2 + (j - y)**2) / sigma**2))
+                update_confidence_map_internal(Y_tmp[...,k], x_kp, y_kp, sigma)
     Y[:,:,:] = resize(Y_tmp, Y.shape, mode='reflect', anti_aliasing=True)   
     
 def update_confidence_map(Y, keypoints, scale, sigma, image_path):
@@ -49,20 +49,14 @@ def update_confidence_map(Y, keypoints, scale, sigma, image_path):
         warn(f"Keypoints data for {image_path} is corrupted.")
         return
     for k in range(NUM_KEYPOINTS):
-        #x, y, visibility = keypoints[3*k], keypoints[3*k+1], keypoints[3*k+2]
-        y, x, visibility = keypoints[3*k], keypoints[3*k+1], keypoints[3*k+2] # COCO keypoints are transposed
+        y_kp, x_kp, visibility = keypoints[3*k], keypoints[3*k+1], keypoints[3*k+2] # COCO keypoints are transposed
         if visibility == 2: # labeled and visible
             # Scale the coordinates
-            x /= scale[0]
-            y /= scale[1]
-            # Calculate using a Gaussian kernel and take max
-            # TODO: vectorize this part
-            for i in range(Y.shape[0]):
-                for j in range(Y.shape[1]):
-                    Y[i,j,k] = max(Y[i,j,k], np.exp(-((i - x)**2 + (j - y)**2) / sigma**2))
-                    
+            x_kp /= scale[0]
+            y_kp /= scale[1]
+            update_confidence_map_internal(Y[...,k], x_kp, y_kp, sigma)
 
-def load_data(data_dir, data_type, image_shape=image_shape, sigma=8.0, num_input=None, verbose=False, 
+def load_data(data_dir, data_type, image_shape=image_shape, sigma=sigma, num_input=None, verbose=False, 
              image_ids = None, use_resize = True):
     """
     Load raw data from disk and preprocess into feature and label tensors.
