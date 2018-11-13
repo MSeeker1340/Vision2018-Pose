@@ -11,7 +11,34 @@ from skimage.io import imread
 from skimage.transform import resize
 from pycocotools.coco import COCO
 from config import NUM_KEYPOINTS, image_shape, sigma
+import matplotlib.pyplot as pyplot
 
+def update_confidence_map_resize(img_shape, Y, annos, sigma, image_path):
+    """
+    Updates the w' x h' x NUM_KEYPOINTS confidence maps Y using one person's
+    keypoints data.
+    """
+    Y_tmp = np.zeros((img_shape[0], img_shape[1], NUM_KEYPOINTS))
+   
+   
+    for anno in annos:
+        keypoints = anno["keypoints"]
+        if len(keypoints) != 3 * NUM_KEYPOINTS:
+            warn(f"Keypoints data for {image_path} is corrupted.")
+            continue
+        for k in range(NUM_KEYPOINTS):
+            y, x, visibility = keypoints[3*k], keypoints[3*k+1], keypoints[3*k+2]
+            if visibility == 2: # labeled and visible
+                # Scale the coordinates
+                # x /= scale[0]
+                # y /= scale[1]
+                # Calculate using a Gaussian kernel and take max
+                # TODO: vectorize this part
+                for i in range(img_shape[0]):
+                    for j in range(img_shape[1]):
+                        Y_tmp[i,j,k] = max(Y_tmp[i,j,k], np.exp(-((i - x)**2 + (j - y)**2) / sigma**2))
+    Y[:,:,:] = resize(Y_tmp, Y.shape, mode='reflect', anti_aliasing=True)   
+    
 def update_confidence_map(Y, keypoints, scale, sigma, image_path):
     """
     Updates the w' x h' x NUM_KEYPOINTS confidence maps Y using one person's
@@ -33,8 +60,10 @@ def update_confidence_map(Y, keypoints, scale, sigma, image_path):
             for i in range(Y.shape[0]):
                 for j in range(Y.shape[1]):
                     Y[i,j,k] = max(Y[i,j,k], np.exp(-((i - x)**2 + (j - y)**2) / sigma**2))
+                    
 
-def load_data(data_dir, data_type, image_shape=image_shape, sigma=sigma, num_input=None, verbose=False):
+def load_data(data_dir, data_type, image_shape=image_shape, sigma=8.0, num_input=None, verbose=False, 
+             image_ids = None, use_resize = True):
     """
     Load raw data from disk and preprocess into feature and label tensors.
 
@@ -54,12 +83,14 @@ def load_data(data_dir, data_type, image_shape=image_shape, sigma=sigma, num_inp
     image_dir = path.join(data_dir, "images", data_type)
     anno_path = path.join(data_dir, "annotations", f"person_keypoints_{data_type}.json")
     coco = COCO(anno_path)
-    image_ids = coco.getImgIds(
-        catIds=coco.getCatIds(catNms=['person'])
-    ) # only load person images
-    image_ids = np.random.permutation(image_ids)
-    if num_input != None:
-        image_ids = image_ids[:num_input]
+    if image_ids == None:
+        image_ids = coco.getImgIds(
+            catIds=coco.getCatIds(catNms=['person'])
+        ) # only load person images
+        image_ids = np.random.permutation(image_ids)
+        if num_input != None:
+            image_ids = image_ids[:num_input]
+    #print(image_ids)
     images = coco.loadImgs(image_ids)
 
     # Allocate feature and label tensor
@@ -76,7 +107,7 @@ def load_data(data_dir, data_type, image_shape=image_shape, sigma=sigma, num_inp
         # Build X (feature; scaled and resized input image)
         img_path = path.join(image_dir, img_data['file_name'])
         verbose and print("Processing ", img_path)
-        img = imread(img_path).astype(float) # VGG19 preprocessing requires pixel range of [0,255]
+        img = imread(img_path).astype(float) # scale pixel value to [0,255]
         if len(img.shape) == 2:
             # Handle black and white images
             img = np.tile(np.reshape(img, (*img.shape, 1)), 3)
@@ -86,10 +117,11 @@ def load_data(data_dir, data_type, image_shape=image_shape, sigma=sigma, num_inp
         # Used to convert keypoint coordinates in the raw image to coordinates
         # in the confidence maps.
         scale = (img.shape[0] / confmap_shape[0], img.shape[1] / confmap_shape[1])
-
-        # Build Y (label; ground truth confidence maps)
         annos = coco.loadAnns(coco.getAnnIds(imgIds=img_data['id']))
-        for anno in annos: # each annotation corresponds to a different person
-            update_confidence_map(Y[i,:,:,:], anno['keypoints'], scale, sigma, img_path)
-
+        if use_resize:
+            # Build Y (label; ground truth confidence maps)
+            update_confidence_map_resize(img.shape, Y[i,:,:,:], annos, sigma, img_path)
+        else:
+            for anno in annos: # each annotation corresponds to a different person
+                update_confidence_map(Y[i,:,:,:], anno['keypoints'], scale, sigma, img_path)
     return X, Y
