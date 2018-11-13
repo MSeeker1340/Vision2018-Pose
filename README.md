@@ -18,9 +18,7 @@ src/preprocessing.py
 Load preprocessed data from its function: 
 
 X, Y = load_data(data_dir, data_type, image_shape=image_shape, sigma=8.0, num_input=None, verbose=False, image_ids = None)
-
 X —— Image
-
 Y —— Confidence map
 
 ### What it does
@@ -33,8 +31,8 @@ The confidence map is calculated using a Gaussian kernel and take max
 ## Plot and Examine Confidence Maps
 src/plot.py
 
+### API
 plot_on_img(x, y, f)
-
 f —— The index of a key point
 
 ### What it does
