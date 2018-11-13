@@ -124,4 +124,5 @@ def load_data(data_dir, data_type, image_shape=image_shape, sigma=8.0, num_input
         else:
             for anno in annos: # each annotation corresponds to a different person
                 update_confidence_map(Y[i,:,:,:], anno['keypoints'], scale, sigma, img_path)
+
     return X, Y
