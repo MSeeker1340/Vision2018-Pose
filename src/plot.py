@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as pyplot
 from skimage.transform import resize
+from config import KEYPOINTS
 
 def plot_result(y, f):
     rshape = y.shape
