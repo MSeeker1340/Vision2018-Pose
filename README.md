@@ -18,7 +18,9 @@ src/preprocessing.py
 Load preprocessed data from its function: 
 
 X, Y = load_data(data_dir, data_type, image_shape=image_shape, sigma=8.0, num_input=None, verbose=False, image_ids = None)
+
 X —— Image
+
 Y —— Confidence map
 
 ### What it does
@@ -29,13 +31,52 @@ We require that s is divisible by 8.
 The confidence map is calculated using a Gaussian kernel and take max
 
 ## Plot and Examine Confidence Maps
+notebooks/Preprocessing.ipynb
 src/plot.py
 
 ### API
 plot_on_img(x, y, f)
+
 f —— The index of a key point
 
 ### What it does
 Plot confidence map Y on image X
 
+## Pretrain X using VGG19 model and get the first 10 layers Z
+src/vgg.py
 
+### API
+Z = prestage(X.copy())
+
+## Train
+notebooks/Train.ipynb
+src/model.py
+
+### API
+stage1.fit(Z, Y, epochs=15, validation_split=0.2)
+stage1.save_weights("../dataset/models/stage1_weights.h5")
+
+### What it does
+Pass Z through the model using Adam optimizer. For each layer, evaluate trained Z and Y's mean square error to check convergence.
+
+Model specification:
+1. Normalize features of each channel
+2. Reduce the number of feature maps
+3. Train the first branch (confidence map) of stage 1
+
+At last, save the normalization weights for prediction
+
+## Test
+notebooks/Test.ipynb
+src/model.py —— stage1.load_weights("../dataset/models/stage1_weights.h5")
+                Y_predict = stage1.predict(Z)
+src/vgg.py —— Z = prestage(X.copy())
+src/plot.py —— plot_on_img(x, y, f)
+
+
+### Test procedure
+1. Load data X,Y from COCO (just like training)
+2. Load weights
+3. Preprocess X using VGG19 and store it in Z
+4. Predict using trained model
+5. Plot results
