@@ -5,6 +5,8 @@
 ## we should probably use the `tf.data` API.
 
 import numpy as np
+import sys
+from progressbar import progressbar
 from warnings import warn
 from os import path
 from skimage.io import imread
@@ -78,6 +80,7 @@ def load_data(data_dir, data_type, image_shape=image_shape, sigma=sigma, num_inp
     image_dir = path.join(data_dir, "images", data_type)
     anno_path = path.join(data_dir, "annotations", f"person_keypoints_{data_type}.json")
     coco = COCO(anno_path)
+    sys.stdout.flush()
     if image_ids == None:
         image_ids = coco.getImgIds(
             catIds=coco.getCatIds(catNms=['person'])
@@ -98,7 +101,8 @@ def load_data(data_dir, data_type, image_shape=image_shape, sigma=sigma, num_inp
     Y = np.zeros((len(images), *confmap_shape, NUM_KEYPOINTS)) # one confidence map for each keypoint
 
     # Build the tensors
-    for i, img_data in enumerate(images):
+    for i in progressbar(range(len(images)), redirect_stdout=True):
+        img_data = images[i]
         # Build X (feature; scaled and resized input image)
         img_path = path.join(image_dir, img_data['file_name'])
         verbose and print("Processing ", img_path)
